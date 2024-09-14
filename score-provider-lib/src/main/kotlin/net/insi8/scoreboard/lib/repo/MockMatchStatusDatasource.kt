@@ -15,6 +15,8 @@ class MockMatchStatusDatasource : MatchStatusRepository {
     private val _matchStatus: MutableStateFlow<Set<Match>> = MutableStateFlow(emptySet())
     private val scoreBoard: Flow<List<Match>> =
         _matchStatus.map { set -> set.filter { match -> match.status is MatchStatus.Progressing } }
+    private val leaderBoard =
+        _matchStatus.map { list -> list.filter { match -> match.status is MatchStatus.Finished } }
 
     override fun startMatch(match: Match) {
         val existingMatch = _matchStatus.value.singleOrNull { fromStorage -> fromStorage.id == match.id }
@@ -66,4 +68,6 @@ class MockMatchStatusDatasource : MatchStatusRepository {
         } ?: throw NoSuchMethodException("updateScore")
 
     }
+
+    override fun getLeaderBoard(): Flow<List<Match>> = leaderBoard
 }

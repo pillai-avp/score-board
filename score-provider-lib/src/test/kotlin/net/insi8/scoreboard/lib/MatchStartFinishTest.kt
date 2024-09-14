@@ -7,6 +7,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import net.insi8.scoreboard.lib.extensions.generateId
 import net.insi8.scoreboard.lib.model.MatchStatus
 import net.insi8.scoreboard.lib.repo.MatchStatusRepository
 import net.insi8.scoreboard.lib.repo.MockMatchStatusDatasource
@@ -67,9 +68,67 @@ class MatchStartFinishTest {
             service.getScoreBoard().test {
                 var items = awaitItem()
                 assertEquals(1, items.size)
-                service.finishMatches("a", "b")
+                service.finishMatch(generateId("a", "b"))
                 items = awaitItem()
                 assertEquals(0, items.size)
+            }
+        }
+    }
+
+    @Test
+    fun `test if the finished matches are appearing on leader board`() = runTest {
+        turbineScope {
+            service.startMatch("a", "b")
+            service.startMatch("a1", "b1")
+            service.startMatch("a2", "b2")
+            service.getScoreBoard().test {
+                var items = awaitItem()
+                val matchToFinish = items[0]
+                assertEquals(3, items.size)
+                service.finishMatch(matchToFinish.id)
+                items = awaitItem()
+                assertEquals(2, items.size)
+                service.leaderBoard().test {
+                    items = awaitItem()
+                    assertEquals(1, items.size)
+                    assertEquals(items[0].id, matchToFinish.id)
+                }
+            }
+        }
+    }
+
+    @Test
+    fun `test the leader board order`() = runTest {
+        turbineScope {
+            service.startMatch("Mexico", "Canada")
+            service.startMatch("Spain", "Brazil")
+            service.startMatch("Germany", "France")
+            service.startMatch("Uruguay", "Italy")
+            service.startMatch("Argentina", "Australia")
+
+            service.updateScore(generateId("Mexico", "Canada"), 0, 5)
+            service.updateScore(generateId("Spain", "Brazil"), 10, 2)
+            service.updateScore(generateId("Germany", "France"), 2, 2)
+            service.updateScore(generateId("Uruguay", "Italy"), 6, 6)
+            service.updateScore(generateId("Argentina", "Australia"), 3, 1)
+
+            service.finishMatch(generateId("Mexico", "Canada"))
+            service.finishMatch(generateId("Germany", "France"))
+            service.finishMatch(generateId("Spain", "Brazil"))
+            service.finishMatch(generateId("Argentina", "Australia"))
+            service.finishMatch(generateId("Uruguay", "Italy"))
+
+            val expectedResult: List<String> = listOf(
+                generateId("Uruguay", "Italy"),
+                generateId("Spain", "Brazil"),
+                generateId("Mexico", "Canada"),
+                generateId("Argentina", "Australia"),
+                generateId("Germany", "France")
+            )
+            service.leaderBoard().test {
+                val items = awaitItem()
+                assertEquals(5, items.size)
+                assertEquals(expectedResult, items.map { it.id })
             }
         }
     }
