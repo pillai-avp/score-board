@@ -47,4 +47,23 @@ class MockMatchStatusDatasource : MatchStatusRepository {
             } ?: mutableSet
         }
     }
+
+    override fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int) {
+        val matchToUpdate =
+            _matchStatus.value.singleOrNull { match -> match.id == matchId && match.status is MatchStatus.Progressing }
+        matchToUpdate?.let { match ->
+            _matchStatus.update { value ->
+                val mutableSet = value.toMutableSet()
+                mutableSet.minus(match).plus(
+                    match.copy(
+                        score = mutableMapOf(
+                            match.homeTeam to homeTeamScore,
+                            match.awayTeam to awayTeamScore
+                        )
+                    )
+                )
+            }
+        } ?: throw NoSuchMethodException("updateScore")
+
+    }
 }

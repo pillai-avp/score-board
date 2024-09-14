@@ -12,6 +12,8 @@ interface MatchStatusServices {
     fun startMatch(homeTeam: String, awayTeam: String)
     fun finishMatches(homeTeam: String, awayTeam: String)
     fun getScoreBoard(): Flow<List<Match>>
+
+    fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int)
 }
 
 class MatchStatusServicesImpl(private val matchStatusRepository: MatchStatusRepository) : MatchStatusServices {
@@ -32,4 +34,12 @@ class MatchStatusServicesImpl(private val matchStatusRepository: MatchStatusRepo
     }
 
     override fun getScoreBoard(): Flow<List<Match>> = matchStatusRepository.getScoreBoardOnGoingMatchesStream()
+
+    override fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int) {
+        matchStatusRepository.updateScore(
+            matchId = matchId,
+            homeTeamScore = homeTeamScore,
+            awayTeamScore = awayTeamScore
+        )
+    }
 }

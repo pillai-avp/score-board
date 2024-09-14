@@ -7,4 +7,6 @@ interface MatchStatusRepository {
     fun startMatch(match: Match)
     fun finishMatch(matchId: String)
     fun getScoreBoardOnGoingMatchesStream(): Flow<List<Match>>
+
+    fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int)
 }
