@@ -5,3 +5,5 @@
 /gradle/wrapper/gradle-wrapper.jar
 /gradle/wrapper/gradle-wrapper.properties
 /.gradle/
+/score-provider-lib/build/reports/tests/test/css/base-style.css
+/score-provider-lib/build/
