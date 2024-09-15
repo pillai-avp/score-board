@@ -12,5 +12,3 @@ private val scoreBoardHandler: ScoreBoardHandler = ScoreBoardHandler()
 fun main(args: Array<String>) {
     runApplication<ScoreBoardApplication>(*args)
 }
-
-
