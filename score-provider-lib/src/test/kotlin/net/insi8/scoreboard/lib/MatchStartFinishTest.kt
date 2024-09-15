@@ -29,6 +29,7 @@ class MatchStartFinishTest {
                 )
             )
         )
+
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
     fun setUp() {
@@ -134,6 +135,37 @@ class MatchStartFinishTest {
                 val items = awaitItem()
                 assertEquals(5, items.size)
                 assertEquals(expectedResult, items.map { it.id })
+            }
+        }
+    }
+
+    @Test
+    fun `archive and clear the board`() = runTest {
+        turbineScope {
+            service.startMatch("Mexico", "Canada")
+            service.getScoreBoard().test {
+                var items = awaitItem()
+                service.finishMatch(generateId("Mexico", "Canada"))
+                items = awaitItem()
+                service.archiveAndClearTheBoard()
+                items = awaitItem()
+                assertEquals(0, items.size)
+            }
+        }
+    }
+
+    @Test
+    fun `archive and clear the board but make sure there is no running match happening`() = runTest {
+        turbineScope {
+            service.startMatch("Mexico", "Canada")
+            service.getScoreBoard().test {
+                var items = awaitItem()
+                try {
+                    service.archiveAndClearTheBoard()
+                    items = awaitItem()
+                } catch (e: Exception) {
+                    assertEquals(true, e is InvalidOperationException)
+                }
             }
         }
     }

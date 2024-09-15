@@ -5,23 +5,22 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.insi8.scoreboard.lib.errors.InvalidOperationException
+import net.insi8.scoreboard.lib.extensions.getAllFinishedMatches
+import net.insi8.scoreboard.lib.extensions.getAllProgressingMatches
 import net.insi8.scoreboard.lib.extensions.replace
 import net.insi8.scoreboard.lib.model.Match
 import net.insi8.scoreboard.lib.model.MatchStatus
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-internal class MockMatchStatusDatasource(
-    private val matchStatus: MutableStateFlow<List<Match>> = MutableStateFlow(
-        emptyList()
-    )
-) : MatchStatusRepository {
+internal class MockMatchStatusDatasource(private val matchStatus: MutableStateFlow<List<Match>>) :
+    MatchStatusRepository {
 
     private val scoreBoard: Flow<List<Match>> =
-        matchStatus.map { set -> set.filter { match -> match.status is MatchStatus.Progressing } }
+        matchStatus.map { list -> list.getAllProgressingMatches() }
 
     private val leaderBoard =
-        matchStatus.map { list -> list.filter { match -> match.status is MatchStatus.Finished } }
+        matchStatus.map { list -> list.getAllFinishedMatches() }
 
     override fun startMatch(match: Match) {
         val existingMatch = matchStatus.value.singleOrNull { fromStorage -> fromStorage.id == match.id }
@@ -69,4 +68,13 @@ internal class MockMatchStatusDatasource(
     }
 
     override fun getLeaderBoard(): Flow<List<Match>> = leaderBoard
+    override fun archiveAndClear() {
+        matchStatus.update {
+            emptyList()
+        }
+    }
+
+    override fun areMatchesInProgress(): Boolean {
+        return matchStatus.value.getAllProgressingMatches().isNotEmpty()
+    }
 }

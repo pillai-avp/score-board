@@ -9,4 +9,6 @@ interface MatchStatusRepository {
     fun getScoreBoardOnGoingMatchesStream(): Flow<List<Match>>
     fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int)
     fun getLeaderBoard(): Flow<List<Match>>
+    fun archiveAndClear()
+    fun areMatchesInProgress(): Boolean
 }

@@ -2,6 +2,7 @@ package net.insi8.scoreboard.lib.services
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import net.insi8.scoreboard.lib.errors.InvalidOperationException
 import net.insi8.scoreboard.lib.extensions.generateId
 import net.insi8.scoreboard.lib.model.Match
 import net.insi8.scoreboard.lib.model.MatchStatus
@@ -15,6 +16,7 @@ interface MatchStatusServices {
     fun getScoreBoard(): Flow<List<Match>>
     fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int)
     fun leaderBoard(): Flow<List<Match>>
+    fun archiveAndClearTheBoard()
 }
 
 class MatchStatusServicesImpl(private val matchStatusRepository: MatchStatusRepository) : MatchStatusServices {
@@ -49,6 +51,14 @@ class MatchStatusServicesImpl(private val matchStatusRepository: MatchStatusRepo
             (match.status as MatchStatus.Finished).startedAt
         }.sortedByDescending { match ->
             match.score.values.reduce { acc, i -> acc + i }
+        }
+    }
+
+    override fun archiveAndClearTheBoard() {
+        if (matchStatusRepository.areMatchesInProgress()) {
+            throw InvalidOperationException("You cant clear board the when there ongoing matches")
+        } else {
+            matchStatusRepository.archiveAndClear()
         }
     }
 }
