@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Score Board</title>
+</head>
+<body>
+<ul id="scoreBoard"></ul>
+<ul id="leaderBoard"></ul>
+<script type="application/javascript">
+    function scoreBoard(message) {
+        const li = document.createElement("li");
+        li.innerHTML = message;
+        const parent = document.getElementById("scoreBoard")
+        while (parent.firstChild) {
+            parent.firstChild.remove()
+        }
+        parent.appendChild(li);
+    }
+    function leaderBoard(message) {
+        const li = document.createElement("li");
+        li.innerHTML = message;
+        const parent = document.getElementById("leaderBoard")
+        while (parent.firstChild) {
+            parent.firstChild.remove()
+        }
+        parent.appendChild(li);
+    }
+    const eventSource = new EventSource("/score-board");
+    eventSource.onmessage = e => {
+        const response = JSON.parse(e.data);
+        scoreBoard(response.scores);
+        leaderBoard(response.leaderBoard)
+    }
+    eventSource.onopen = e => scoreBoard('Connection opened');
+</script>
+</body>
+</html>
