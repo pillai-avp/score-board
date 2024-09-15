@@ -7,6 +7,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import net.insi8.scoreboard.lib.errors.InvalidOperationException
 import net.insi8.scoreboard.lib.extensions.generateId
 import net.insi8.scoreboard.lib.model.MatchStatus
 import net.insi8.scoreboard.lib.repo.MatchStatusRepository
@@ -15,7 +16,6 @@ import net.insi8.scoreboard.lib.services.MatchStatusServices
 import net.insi8.scoreboard.lib.services.MatchStatusServicesImpl
 import org.junit.Before
 import org.junit.Test
-import java.io.InvalidObjectException
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -33,8 +33,8 @@ class MatchStartFinishTest {
     @Test
     fun `test if the started matches are visible in the score board`() = runTest {
         turbineScope {
-            service.startMatch("a", "b")
-            service.startMatch("ab", "ab")
+            service.startMatch("Spain", "Germany")
+            service.startMatch("Germany", "France")
             service.getScoreBoard().test {
                 val items = awaitItem()
                 assertEquals(2, items.size)
@@ -47,15 +47,15 @@ class MatchStartFinishTest {
     @Test
     fun `test should not be allowed to add an existing match to the list`() = runTest {
         turbineScope {
-            service.startMatch("a", "b")
+            service.startMatch("Spain", "Germany")
             try {
                 service.getScoreBoard().test {
                     val items = awaitItem()
                     assertEquals(1, items.size)
                 }
-                service.startMatch("a", "a")
+                service.startMatch("Spain", "Germany")
             } catch (e: Exception) {
-                assertTrue { e is InvalidObjectException }
+                assertTrue { e is InvalidOperationException }
             }
         }
     }
@@ -64,11 +64,11 @@ class MatchStartFinishTest {
     @Test
     fun `test if the finished matches are removed from the score board`() = runTest {
         turbineScope {
-            service.startMatch("a", "b")
+            service.startMatch("Spain", "Germany")
             service.getScoreBoard().test {
                 var items = awaitItem()
                 assertEquals(1, items.size)
-                service.finishMatch(generateId("a", "b"))
+                service.finishMatch(generateId("Spain", "Germany"))
                 items = awaitItem()
                 assertEquals(0, items.size)
             }
@@ -78,9 +78,9 @@ class MatchStartFinishTest {
     @Test
     fun `test if the finished matches are appearing on leader board`() = runTest {
         turbineScope {
-            service.startMatch("a", "b")
-            service.startMatch("a1", "b1")
-            service.startMatch("a2", "b2")
+            service.startMatch("Spain", "Germany")
+            service.startMatch("Brazil", "Argentina")
+            service.startMatch("Japan", "India")
             service.getScoreBoard().test {
                 var items = awaitItem()
                 val matchToFinish = items[0]
