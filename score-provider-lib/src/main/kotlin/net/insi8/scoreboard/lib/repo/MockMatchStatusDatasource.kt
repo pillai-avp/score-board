@@ -5,58 +5,58 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import net.insi8.scoreboard.lib.errors.InvalidOperationException
+import net.insi8.scoreboard.lib.extensions.replace
 import net.insi8.scoreboard.lib.model.Match
 import net.insi8.scoreboard.lib.model.MatchStatus
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-
-class MockMatchStatusDatasource : MatchStatusRepository {
-    private val _matchStatus: MutableStateFlow<Set<Match>> = MutableStateFlow(emptySet())
+internal class MockMatchStatusDatasource(
+    private val matchStatus: MutableStateFlow<List<Match>> = MutableStateFlow(
+        emptyList()
+    )
+) : MatchStatusRepository {
 
     private val scoreBoard: Flow<List<Match>> =
-        _matchStatus.map { set -> set.filter { match -> match.status is MatchStatus.Progressing } }
+        matchStatus.map { set -> set.filter { match -> match.status is MatchStatus.Progressing } }
 
     private val leaderBoard =
-        _matchStatus.map { list -> list.filter { match -> match.status is MatchStatus.Finished } }
+        matchStatus.map { list -> list.filter { match -> match.status is MatchStatus.Finished } }
 
     override fun startMatch(match: Match) {
-        val existingMatch = _matchStatus.value.singleOrNull { fromStorage -> fromStorage.id == match.id }
+        val existingMatch = matchStatus.value.singleOrNull { fromStorage -> fromStorage.id == match.id }
         if (existingMatch != null) {
             throw InvalidOperationException("You cannot start a match that is already in progress.")
         }
-        _matchStatus.update { value ->
-            value.toMutableSet().plus(
-                match
-            )
+        matchStatus.update { value ->
+            value.toMutableList().plus(match)
         }
     }
 
     override fun getScoreBoardOnGoingMatchesStream(): Flow<List<Match>> = scoreBoard
 
     override fun finishMatch(matchId: String) {
-        _matchStatus.update { value ->
-            val allMatches = value.toMutableSet()
+        matchStatus.update { value ->
+            val allMatches = value.toMutableList()
             allMatches.singleOrNull { match -> match.id == matchId }?.let { match ->
                 val status = match.status
-                allMatches.minus(match).plus(
-                    if (status is MatchStatus.Progressing) {
-                        match.copy(status = MatchStatus.Finished(status.startedAt, LocalDateTime.now(ZoneId.of("UTC"))))
-                    } else {
-                        match
-                    }
-                )
+                val editedMatch = if (status is MatchStatus.Progressing) {
+                    match.copy(status = MatchStatus.Finished(status.startedAt, LocalDateTime.now(ZoneId.of("UTC"))))
+                } else {
+                    match
+                }
+                allMatches.replace(match, editedMatch)
             } ?: allMatches
         }
     }
 
     override fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int) {
         val matchToUpdate =
-            _matchStatus.value.singleOrNull { match -> match.id == matchId && match.status is MatchStatus.Progressing }
+            matchStatus.value.singleOrNull { match -> match.id == matchId && match.status is MatchStatus.Progressing }
         matchToUpdate?.let { match ->
-            _matchStatus.update { value ->
-                val mutableSet = value.toMutableSet()
-                mutableSet.minus(match).plus(
+            matchStatus.update { value ->
+                value.replace(
+                    match,
                     match.copy(
                         score = mapOf(
                             match.homeTeam to homeTeamScore,
@@ -66,7 +66,6 @@ class MockMatchStatusDatasource : MatchStatusRepository {
                 )
             }
         } ?: throw InvalidOperationException("This match cannot be fount, may be its already finished.")
-
     }
 
     override fun getLeaderBoard(): Flow<List<Match>> = leaderBoard

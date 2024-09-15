@@ -4,12 +4,12 @@ import app.cash.turbine.test
 import app.cash.turbine.turbineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.insi8.scoreboard.lib.errors.InvalidOperationException
 import net.insi8.scoreboard.lib.extensions.generateId
-import net.insi8.scoreboard.lib.repo.MatchStatusRepository
 import net.insi8.scoreboard.lib.repo.MockMatchStatusDatasource
 import net.insi8.scoreboard.lib.services.MatchStatusServices
 import net.insi8.scoreboard.lib.services.MatchStatusServicesImpl
@@ -20,8 +20,14 @@ import kotlin.test.assertTrue
 
 
 class MatchScoreTest {
-    private val repo: MatchStatusRepository = MockMatchStatusDatasource()
-    private val service: MatchStatusServices = MatchStatusServicesImpl(matchStatusRepository = repo)
+    private val service: MatchStatusServices =
+        MatchStatusServicesImpl(
+            matchStatusRepository = MockMatchStatusDatasource(
+                matchStatus = MutableStateFlow(
+                    emptyList()
+                )
+            )
+        )
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Before
