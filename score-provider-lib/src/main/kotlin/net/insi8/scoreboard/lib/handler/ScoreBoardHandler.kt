@@ -34,4 +34,8 @@ class ScoreBoardHandler {
     fun leaderBoard(): Flow<List<Match>> {
         return services.leaderBoard()
     }
+
+    fun archiveAndClearTheBoard() {
+        return services.archiveAndClearTheBoard()
+    }
 }

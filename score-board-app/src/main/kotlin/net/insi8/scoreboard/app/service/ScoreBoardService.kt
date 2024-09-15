@@ -12,5 +12,9 @@ class ScoreBoardService(val scoreBoardHandler: ScoreBoardHandler) {
 
     @OptIn(FlowPreview::class)
     fun getLeaderBoard() =
-        scoreBoardHandler.leaderBoard().map { list -> list.map { match -> match.score }.toString() }.debounce(1000)
+        scoreBoardHandler.leaderBoard().map { list -> list.map { match -> match.score }.toString() }.debounce(500)
+
+    fun archiveAndClearTheBoard() {
+        scoreBoardHandler.archiveAndClearTheBoard()
+    }
 }
