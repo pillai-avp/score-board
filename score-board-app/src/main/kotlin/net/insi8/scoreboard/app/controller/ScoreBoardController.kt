@@ -22,7 +22,7 @@ class ScoreBoardController(
         }
     }
 
-    @PostMapping("/start-matches")
+    @PostMapping("/mock/start-matches")
     suspend fun startMatches() {
         scoreBoardService.archiveAndClearTheBoard()
         testStartMatches.testStartMatchesAndMockScores()

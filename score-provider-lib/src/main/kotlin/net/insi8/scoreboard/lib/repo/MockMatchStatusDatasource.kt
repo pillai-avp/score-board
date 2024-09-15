@@ -35,18 +35,17 @@ internal class MockMatchStatusDatasource(private val matchStatus: MutableStateFl
     override fun getScoreBoardOnGoingMatchesStream(): Flow<List<Match>> = scoreBoard
 
     override fun finishMatch(matchId: String) {
-        matchStatus.update { value ->
-            val allMatches = value.toMutableList()
-            allMatches.singleOrNull { match -> match.id == matchId }?.let { match ->
-                val status = match.status
-                val editedMatch = if (status is MatchStatus.Progressing) {
+        val matchToUpdate =
+            matchStatus.value.singleOrNull { match -> match.id == matchId && match.status is MatchStatus.Progressing }
+        matchToUpdate?.let { match ->
+            matchStatus.update { allMatches ->
+                val status = match.status as MatchStatus.Progressing
+                allMatches.replace(
+                    match,
                     match.copy(status = MatchStatus.Finished(status.startedAt, LocalDateTime.now(ZoneId.of("UTC"))))
-                } else {
-                    match
-                }
-                allMatches.replace(match, editedMatch)
-            } ?: allMatches
-        }
+                )
+            }
+        } ?: throw InvalidOperationException("This match cannot be fount, may be its already finished.")
     }
 
     override fun updateScore(matchId: String, homeTeamScore: Int, awayTeamScore: Int) {

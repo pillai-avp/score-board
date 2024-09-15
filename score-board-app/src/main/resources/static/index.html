@@ -7,6 +7,7 @@
 <body>
 <ul id="scoreBoard"></ul>
 <ul id="leaderBoard"></ul>
+<button id="startButton">Mock the matches</button>
 <script type="application/javascript">
     function scoreBoard(message) {
         const li = document.createElement("li");
@@ -33,6 +34,19 @@
         leaderBoard(response.leaderBoard)
     }
     eventSource.onopen = e => scoreBoard('Connection opened');
+    const button = document.getElementById('startButton');
+    button.addEventListener('click', async _ => {
+      try {
+        const response = await fetch('/mock/start-matches', {
+          method: 'post',
+          body: {
+          }
+        });
+        console.log('Completed!', response);
+      } catch(err) {
+        console.error(`Error: ${err}`);
+      }
+    });
 </script>
 </body>
 </html>

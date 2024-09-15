@@ -10,10 +10,10 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import net.insi8.scoreboard.lib.errors.InvalidOperationException
 import net.insi8.scoreboard.lib.extensions.generateId
+import net.insi8.scoreboard.lib.handler.ScoreBoardHandler
+import net.insi8.scoreboard.lib.handler.ScoreBoardHandlerImpl
 import net.insi8.scoreboard.lib.model.MatchStatus
 import net.insi8.scoreboard.lib.repo.MockMatchStatusDatasource
-import net.insi8.scoreboard.lib.services.MatchStatusServices
-import net.insi8.scoreboard.lib.services.MatchStatusServicesImpl
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -21,8 +21,8 @@ import kotlin.test.assertTrue
 
 
 class MatchStartFinishTest {
-    private val service: MatchStatusServices =
-        MatchStatusServicesImpl(
+    private val service: ScoreBoardHandler =
+        ScoreBoardHandlerImpl(
             matchStatusRepository = MockMatchStatusDatasource(
                 matchStatus = MutableStateFlow(
                     emptyList()
